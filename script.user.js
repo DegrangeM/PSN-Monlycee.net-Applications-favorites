@@ -11,6 +11,7 @@
 // @grant        GM_getValue
 // ==/UserScript==
 
+/*
 function getApps() {
     return fetch('https://ent.iledefrance.fr/auth/oauth2/userinfo').then(x => x.json()).then(x => x.apps);
 }
@@ -26,13 +27,43 @@ function getFavoritesApps() {
         )
     );
 }
+*/
 
-function saveFavorites() {
-    getFavoritesApps().then(x => {
-        GM_setValue('favoritesApps', JSON.stringify(x));
+function getFavoritesApps() {
+    let favoritesApps = Array.from(document.querySelectorAll('#bookmarked-apps>article'));
+    favoritesApps = favoritesApps.map(x => {
+        let app = {};
+        let img = x.querySelector('img');
+        app.icon = img.getAttribute('src');
+        if (app.icon.startsWith('/workspace/')) {
+            // On ne peut accéder à l'image que si l'on est connecté à l'ent
+            // Il faut donc récupérer le contenu de l'image
+            let c = document.createElement('canvas');
+            c.height = img.naturalHeight;
+            c.width = img.naturalWidth;
+            var ctx = c.getContext('2d');
+            ctx.drawImage(img, 0, 0, c.width, c.height);
+            app.icon = c.toDataURL();
+        }
+        app.displayName = x.querySelector('span').innerText;
+        app.address = x.querySelector('a').getAttribute('href');
+        return app;
     });
+    return favoritesApps;
 }
 
+function saveFavorites() {
+    GM_setValue('favoritesApps', JSON.stringify(getFavoritesApps()));
+}
+
+
+function waitAndSaveFavorites() {
+    if (document.querySelector('#bookmarked-apps>article')) {
+        saveFavorites();
+    } else {
+        setTimeout(waitAndSaveFavorites, 100);
+    }
+}
 function getFavorites() {
     return JSON.parse(GM_getValue('favoritesApps', '[]'));
 }
@@ -41,7 +72,8 @@ function cloneAttributes(source, target) {
     source.getAttributeNames().forEach(x => target.setAttribute(x, source.getAttribute(x)));
 }
 
-function displayName(name) {
+/*
+ function displayName(name) {
     const names = {
         "lystore": "Lystore",
         "support": "Assistance ENT",
@@ -69,6 +101,11 @@ function displayName(name) {
     }
     return names[name] || name;
 }
+*/
+
+function displayName(name) {
+    return name;
+}
 
 function displayFavorites() {
     let favorites = getFavorites();
@@ -84,7 +121,7 @@ function displayFavorites() {
         let favoritesNodeLi = servicesNodeLi.cloneNode(true);
         let img = favoritesNodeLi.querySelector('img');
         img.addEventListener('error', () => {
-            img.setAttribute('src', 'https://psn.monlycee.net/assets/outils-pedagogiques-BrqyhJKR.svg');     
+            img.setAttribute('src', 'https://psn.monlycee.net/assets/outils-pedagogiques-BrqyhJKR.svg');
         });
         img.setAttribute('src', new URL(app.icon, 'https://ent.iledefrance.fr').href);
         img.setAttribute('alt', displayName(app.displayName));
@@ -109,7 +146,7 @@ function waitAndDisplayFavorites() {
     'use strict';
 
     if (location.hostname === 'ent.iledefrance.fr') {
-        saveFavorites();
+        waitAndSaveFavorites();
     } else if (location.hostname === 'psn.monlycee.net') {
         waitAndDisplayFavorites();
     }
