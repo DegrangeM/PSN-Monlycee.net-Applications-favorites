@@ -72,7 +72,6 @@ function displayName(name) {
 
 function displayFavorites() {
     let favorites = getFavorites();
-    // localStorage.setItem('favorites', JSON.stringify(favorites));
     let servicesNode = document.getElementById('services');
     let favoritesNodeHead = servicesNode.querySelector('.box-head').cloneNode(true);
     favoritesNodeHead.querySelector('h2').innerText = 'Favoris';
@@ -81,30 +80,12 @@ function displayFavorites() {
     let favoritesNodeUl = document.createElement('ul');
     cloneAttributes(servicesNodeUl, favoritesNodeUl);
     let servicesNodeLi = servicesNodeUl.querySelector('li');
-    let firstLocalImage = true;
     favorites.forEach(app => {
         let favoritesNodeLi = servicesNodeLi.cloneNode(true);
         let img = favoritesNodeLi.querySelector('img');
-        if(app.icon.startsWith('/workspace/') && firstLocalImage) {
-            // Certaines applications ont des images nécessitant une connexion à l'ent. Il faut gérer ce cas.
-            firstLocalImage = false;
-            img.addEventListener('error', () => {
-                    if(!img.getAttribute('src').startsWith('https://ent.iledefrance.fr/auth/openid/login?callBack=')) {
-                        img.addEventListener('load', () => {
-                            // La connexion a été forcée, on peut charger les autres images
-                            debugger;
-                            Array.from(favoritesNodeLi).forEach(node => {
-                                let appImg = node.querySelector('img');
-                                if(appImg && appImg.getAttribute('src').startsWith('https://ent.iledefrance.fr/workspace/')) {
-                                    appImg.setAttribute('src', appImg.getAttribute('src') + '?');
-                                }
-                            });
-                        });
-                        // Charger l'image ci-dessous forcera la connexion à l'ent
-                        img.setAttribute('src', 'https://ent.iledefrance.fr/auth/openid/login?callBack=' + encodeURIComponent(new URL(app.icon, 'https://ent.iledefrance.fr').href));
-                    }
-            });
-        }
+        img.addEventListener('error', () => {
+            img.setAttribute('src', 'https://psn.monlycee.net/assets/outils-pedagogiques-BrqyhJKR.svg');     
+        });
         img.setAttribute('src', new URL(app.icon, 'https://ent.iledefrance.fr').href);
         img.setAttribute('alt', displayName(app.displayName));
         let a = favoritesNodeLi.querySelector('a');
