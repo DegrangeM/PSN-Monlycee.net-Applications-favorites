@@ -2,11 +2,11 @@
 // @name         PSN-Monlycee.net-Applications-favorites
 // @namespace    http://tampermonkey.net/
 // @version      2024-08-31
-// @description  try to take over the world!
+// @description  Permet d'afficher ses applications favorites directement sur le PSN
 // @author       Mathieu Degrange
 // @match        https://ent.iledefrance.fr/welcome
 // @match        https://psn.monlycee.net/*
-// @icon         https://www.google.com/s2/favicons?sz=64&domain=iledefrance.fr
+// @icon         https://monlycee.net/assets/img/favicon.ico
 // @grant        GM_setValue
 // @grant        GM_getValue
 // ==/UserScript==
@@ -126,7 +126,15 @@ function displayFavorites() {
         img.setAttribute('src', new URL(app.icon, 'https://ent.iledefrance.fr').href);
         img.setAttribute('alt', displayName(app.displayName));
         let a = favoritesNodeLi.querySelector('a');
-        a.setAttribute('href', new URL(app.address, 'https://ent.iledefrance.fr').href);
+        let url;
+        try {
+            url = new URL(app.address).href;
+        } catch (e) {
+            // C'est une URL locale
+            url = new URL(app.address, 'https://ent.iledefrance.fr'); // On la transforme en URL absolue
+            url = 'https://ent.iledefrance.fr/auth/openid/login?callback=' + encodeURIComponent(url.href); // On ajoute le login
+        }
+        a.setAttribute('href', url);
         a.querySelector('h3').innerText = displayName(app.displayName);
         favoritesNodeLi.querySelector('p:not(.picto)').remove()
         favoritesNodeUl.appendChild(favoritesNodeLi);
